@@ -4,7 +4,7 @@ from tkinter import messagebox
 class Piece:
     def __init__(self, piece_type, position):
         self.piece_type = piece_type  # 'Gray', 'Red', or 'Purple'
-        self.position = position  # (row, column) tuple
+        self.position = position  # (row, column)
 
     def __repr__(self):
         return f"{self.piece_type[0]}({self.position})"
@@ -33,8 +33,8 @@ class Board:
         self.m = m  # Number of columns
         self.grid = [[' ' for _ in range(m)] for _ in range(n)]
         self.pieces = {piece.position: piece for piece in pieces}  # Dict of pieces by their positions
-        self.targets = targets  # List of target positions as (row, col) tuples
-        self.initial_pieces = pieces  # Save initial pieces for reset
+        self.targets = targets 
+        self.initial_pieces = pieces 
         self.initialize_board()
 
     def initialize_board(self):
@@ -149,12 +149,18 @@ class GameGUI:
         self.canvas = tk.Canvas(master, width=self.cell_size * self.game_state.board.m, height=self.cell_size * self.game_state.board.n)
         self.canvas.pack()
         self.selected_piece = None
+        self.hover_cell = None
         self.draw_board()
         self.canvas.bind("<Button-1>", self.on_click)
-
-        # Add Reset Button
-        self.reset_button = tk.Button(master, text="Reset", command=self.reset_board)
-        self.reset_button.pack()
+        self.canvas.bind("<Motion>", self.on_hover)
+        
+        # Create an interactive Reset button
+        self.reset_button = tk.Button(master, text="Reset Board", command=self.reset_board, bd= 5, font=("Calibri", 12, "bold"), highlightcolor= "gray", highlightthickness= 10)
+        self.reset_button.pack(pady=10)
+        
+        # Button hover effect
+        self.reset_button.bind("<Enter>", lambda event: self.reset_button.config(bg="lightblue", relief="raised"))
+        self.reset_button.bind("<Leave>", lambda event: self.reset_button.config(bg="SystemButtonFace", relief= "raised"))
 
     def draw_board(self):
         self.canvas.delete("all")
@@ -162,28 +168,57 @@ class GameGUI:
             for col in range(self.game_state.board.m):
                 x1, y1 = col * self.cell_size, row * self.cell_size
                 x2, y2 = x1 + self.cell_size, y1 + self.cell_size
-                color = "white"
-                if (row, col) in self.game_state.board.targets:
-                    color = "lightGreen"
+                color = "lightgreen" if (row, col) in self.game_state.board.targets else "white"
+                
+                if (row, col) == self.hover_cell:
+                    color = "lightblue"  # Highlight hovered cell
+                
                 self.canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="black")
+
                 if (row, col) in self.game_state.board.pieces:
                     piece = self.game_state.board.pieces[(row, col)]
                     piece_color = "gray" if piece.piece_type == 'Gray' else "red" if piece.piece_type == 'Red' else "purple"
-                    self.canvas.create_oval(x1 + 5, y1 + 5, x2 - 5, y2 - 5, fill=piece_color)
+
+                    # Draw shadow
+                    shadow_offset = 3 if (row, col) != self.selected_piece else 0
+                    self.canvas.create_oval(x1 + 10 + shadow_offset, y1 + 10 + shadow_offset,
+                                            x2 - 10 + shadow_offset, y2 - 10 + shadow_offset,
+                                            fill="black", outline="")
+
+                    # Draw piece with a 3D effect
+                    self.canvas.create_oval(x1 + 5, y1 + 5, x2 - 5, y2 - 5, fill=piece_color, outline="black", width=2)
+
+                    # Highlight selected piece
+                    if (row, col) == self.selected_piece:
+                        self.canvas.create_rectangle(x1, y1, x2, y2, outline="blue", width=2)
 
     def on_click(self, event):
         row, col = event.y // self.cell_size, event.x // self.cell_size
-        if self.selected_piece:
-            piece = self.game_state.board.pieces.get(self.selected_piece)
-            if piece:
-                self.game_state = self.game_state.make_move(piece, (row, col))
-                self.selected_piece = None
-                if self.game_state.is_final_state():
-                    self.draw_board()
-                    self.show_win_message()
+        
+        # Check if the clicked cell is the same as the currently selected piece
+        if self.selected_piece == (row, col):
+            # Deselect the piece
+            self.selected_piece = None
+        else:
+            if self.selected_piece:
+                piece = self.game_state.board.pieces.get(self.selected_piece)
+                if piece and self.game_state.board.can_move_to(row, col):
+                    self.game_state = self.game_state.make_move(piece, (row, col))
+                    self.selected_piece = None
+                    if self.game_state.is_final_state():
+                        self.draw_board()
+                        self.show_win_message()
+                self.draw_board()
+            elif (row, col) in self.game_state.board.pieces:
+                # Select the new piece
+                self.selected_piece = (row, col)
+        self.draw_board()
+
+    def on_hover(self, event):
+        row, col = event.y // self.cell_size, event.x // self.cell_size
+        if (row, col) != self.hover_cell:
+            self.hover_cell = (row, col)
             self.draw_board()
-        elif (row, col) in self.game_state.board.pieces:
-            self.selected_piece = (row, col)
 
     def show_win_message(self):
         messagebox.showinfo("Congratulations!", "You've won the game!")
