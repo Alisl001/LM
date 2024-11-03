@@ -3,8 +3,8 @@ from tkinter import messagebox
 
 class Piece:
     def __init__(self, piece_type, position):
-        self.piece_type = piece_type  # 'Gray', 'Red', or 'Purple'
-        self.position = position  # (row, column)
+        self.piece_type = piece_type  
+        self.position = position 
 
     def __repr__(self):
         return f"{self.piece_type[0]}({self.position})"
@@ -15,6 +15,7 @@ class Piece:
 class GameState:
     def __init__(self, board):
         self.board = board
+        self.history = [board.copy()] 
 
     def display(self):
         self.board.display()
@@ -25,21 +26,23 @@ class GameState:
     def make_move(self, piece, new_position):
         new_board = self.board.copy()
         new_board.make_move(piece, new_position)
-        return GameState(new_board)
+        new_state = GameState(new_board)
+        self.history.append(new_board)  
+        return new_state
 
 class Board:
     def __init__(self, n, m, pieces, targets):
-        self.n = n  # Number of rows
-        self.m = m  # Number of columns
+        self.n = n  
+        self.m = m  
         self.grid = [[' ' for _ in range(m)] for _ in range(n)]
-        self.pieces = {piece.position: piece for piece in pieces}  # Dict of pieces by their positions
+        self.pieces = {piece.position: piece for piece in pieces}  
         self.targets = targets 
         self.initial_pieces = pieces 
         self.initialize_board()
 
     def initialize_board(self):
         self.grid = [[' ' for _ in range(self.m)] for _ in range(self.n)]
-        self.pieces = {piece.position: piece for piece in self.initial_pieces}  # Reset pieces
+        self.pieces = {piece.position: piece for piece in self.initial_pieces}  
         for piece in self.pieces.values():
             row, col = piece.position
             self.grid[row][col] = piece.piece_type[0]
@@ -146,8 +149,8 @@ class GameGUI:
         self.game_state = game_state
         self.initial_state = GameState(game_state.board.copy())
         self.cell_size = 75
-        self.history_stack = []  # Stack to keep track of game states for undo functionality
-        self.move_log = []       # List to keep track of move log for display
+        self.history_stack = [] 
+        self.move_log = [] 
         
         # Canvas and Board
         self.canvas = tk.Canvas(master, width=self.cell_size * self.game_state.board.m, height=self.cell_size * self.game_state.board.n)
@@ -185,7 +188,7 @@ class GameGUI:
                 color = "lightgreen" if (row, col) in self.game_state.board.targets else "white"
                 
                 if (row, col) == self.hover_cell:
-                    color = "lightblue"  # Highlight hovered cell
+                    color = "lightblue" 
                 
                 self.canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="black")
 
@@ -203,7 +206,6 @@ class GameGUI:
     def on_click(self, event):
         row, col = event.y // self.cell_size, event.x // self.cell_size
         
-        # Check if the clicked cell is the same as the currently selected piece
         if self.selected_piece == (row, col):
             self.selected_piece = None
         else:
@@ -232,21 +234,21 @@ class GameGUI:
         messagebox.showinfo("Congratulations!", "You've won the game!")
 
     def reset_board(self):
-        self.history_stack.clear()  # Clear history stack
-        self.clear_log()            # Clear move log
+        self.history_stack.clear()  
+        self.clear_log()            
         self.game_state = GameState(self.initial_state.board.copy())
         self.draw_board()
 
     def undo_move(self):
         if self.history_stack:
-            self.game_state = self.history_stack.pop()  # Revert to previous state
-            self.remove_last_log_entry()  # Remove last log entry
+            self.game_state = self.history_stack.pop()  
+            self.remove_last_log_entry()  
             self.draw_board()
         else:
             messagebox.showinfo("Undo", "No more moves to undo!")
 
     def log_move(self, piece, new_position):
-        # Log the move notation
+        # Move notation
         piece_type = piece.piece_type[0]
         log_entry = f"{piece_type} to {new_position}\n"
         self.move_log_text.config(state='normal')
