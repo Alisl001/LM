@@ -322,63 +322,52 @@ class GameGUI:
 from collections import deque
 
 def bfs_solver(initial_state):
-    queue = deque([(initial_state, [])])  # Queue holds tuples of (current_state, moves_sequence)
-    visited = set()  # To track visited states
+    queue = deque([(initial_state, [])])  
+    visited = set()  
 
     def state_key(state):
-        # Create a unique key for the board state based on piece positions
         return tuple((piece.position, piece.piece_type) for piece in state.board.pieces.values())
 
-    # Mark the initial state as visited
     visited.add(state_key(initial_state))
 
     while queue:
         current_state, moves = queue.popleft()
 
-        # Check if we've reached the goal state
         if current_state.is_final_state():
             return moves
 
-        # Generate all possible moves for each piece
         for piece in current_state.board.pieces.values():
             if piece.piece_type in ['Red', 'Purple']:
                 for new_position in generate_possible_moves(current_state.board, piece):
-                    # Capture the old position before moving
                     old_position = piece.position
 
-                    # Create a new game state after making the move
                     new_state = current_state.make_move(piece, new_position)
 
-                    # If this new state has not been visited
                     new_state_key = state_key(new_state)
                     if new_state_key not in visited:
                         visited.add(new_state_key)
-                        # Log the move using the old position and the new position
                         move_description = f"{piece.piece_type}({old_position[0]}, {old_position[1]}) to ({new_position[0]}, {new_position[1]})"
                         queue.append((new_state, moves + [move_description]))
 
-    return None  # No solution found
+    return None  
 
 def generate_possible_moves(board, piece):
     possible_moves = []
-    n, m = board.n, board.m  # Dimensions of the board
+    n, m = board.n, board.m  
     row, col = piece.position
 
-    # For Red magnets: they can move to any empty cell
     if piece.piece_type == 'Red':
         for r in range(n):
             for c in range(m):
                 if board.can_move_to(r, c):
                     possible_moves.append((r, c))
 
-    # For Purple magnets: they can also move to any empty cell
     elif piece.piece_type == 'Purple':
         for r in range(n):
             for c in range(m):
                 if board.can_move_to(r, c):
                     possible_moves.append((r, c))
 
-    # Gray magnets are immovable, so no moves are generated
     return possible_moves
 
 def move_piece(state, piece, new_position):
@@ -388,57 +377,46 @@ def move_piece(state, piece, new_position):
     old_row, old_col = piece['position']
     new_row, new_col = new_position
     
-    # Move the magnet to the new position on the board
-    board_copy[old_row][old_col] = ' '  # Clear old position
-    board_copy[new_row][new_col] = piece['type'][0]  # Mark new position
+    board_copy[old_row][old_col] = ' '  
+    board_copy[new_row][new_col] = piece['type'][0]  
     
-    # Update the magnet's position
     for magnet in magnets_copy:
         if magnet['position'] == (old_row, old_col):
             magnet['position'] = (new_row, new_col)
             break
     
-    # Return a new state dictionary
     return {'board': board_copy, 'magnets': magnets_copy}
 
 
 def dfs_solver(initial_state):
-    stack = [(initial_state, [])]  # Stack holds tuples of (current_state, moves_sequence)
-    visited = set()  # To track visited states
+    stack = [(initial_state, [])] 
+    visited = set() 
 
     def state_key(state):
-        # Create a unique key for the board state based on piece positions
         return tuple((piece.position, piece.piece_type) for piece in state.board.pieces.values())
 
-    # Mark the initial state as visited
     visited.add(state_key(initial_state))
 
     while stack:
         current_state, moves = stack.pop()
 
-        # Check if we've reached the goal state
         if current_state.is_final_state():
             return moves
 
-        # Generate all possible moves for each piece
         for piece in current_state.board.pieces.values():
             if piece.piece_type in ['Red', 'Purple']:
                 for new_position in generate_possible_moves(current_state.board, piece):
-                    # Capture the old position before moving
                     old_position = piece.position
 
-                    # Create a new game state after making the move
                     new_state = current_state.make_move(piece, new_position)
 
-                    # If this new state has not been visited
                     new_state_key = state_key(new_state)
                     if new_state_key not in visited:
                         visited.add(new_state_key)
-                        # Log the move using the old position and the new position
                         move_description = f"{piece.piece_type}({old_position[0]}, {old_position[1]}) to ({new_position[0]}, {new_position[1]})"
                         stack.append((new_state, moves + [move_description]))
 
-    return None  # No solution found
+    return None 
 
 # initial_pieces = [
 #     Piece('Gray', (0, 1)), 
@@ -459,7 +437,6 @@ def dfs_solver(initial_state):
 # else:
 #     print("No solution found")
 
-# Usage example
 root = tk.Tk()
 initial_pieces = [
     Piece('Gray', (0, 1)), 
