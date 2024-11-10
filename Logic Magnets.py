@@ -248,9 +248,11 @@ class GameGUI:
             messagebox.showinfo("Undo", "No more moves to undo!")
 
     def log_move(self, piece, new_position):
-        # Move notation
+        # Move notation:
         piece_type = piece.piece_type[0]
-        log_entry = f"{piece_type} to {new_position}\n"
+        old_position = piece.position 
+        log_entry = f"{piece_type}({old_position[0]}, {old_position[1]}) to ({new_position[0]}, {new_position[1]})\n"
+        
         self.move_log_text.config(state='normal')
         self.move_log_text.insert('end', log_entry)
         self.move_log_text.config(state='disabled')
