@@ -439,7 +439,7 @@ root = tk.Tk()
 initial_pieces = [
     Piece('Gray', (1, 1)), 
     Piece('Gray', (1, 3)),
-    Piece('Purple', (0, 4))
+    Piece('Purple', (0, 2))
 ]
 targets = [(1, 0), (1, 2), (1, 4)]
 board = Board(3, 5, initial_pieces, targets)
