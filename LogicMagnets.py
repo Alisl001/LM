@@ -316,33 +316,6 @@ class GameGUI:
         self.move_log_text.config(state='disabled')
 
 
-def bfs_solver(initial_state):
-    queue = deque([(initial_state, [])])  
-    visited = set()  
-
-    visited.add(state_key(initial_state))
-
-    while queue:
-        current_state, moves = queue.popleft()
-
-        if current_state.is_final_state():
-            return moves
-
-        for piece in current_state.board.pieces.values():
-            if piece.piece_type in ['Red', 'Purple']:
-                for new_position in generate_possible_moves(current_state.board, piece):
-                    old_position = piece.position
-
-                    new_state = current_state.make_move(piece, new_position)
-
-                    new_state_key = state_key(new_state)
-                    if new_state_key not in visited:
-                        visited.add(new_state_key)
-                        move_description = f"{piece.piece_type}({old_position[0]}, {old_position[1]}) to ({new_position[0]}, {new_position[1]})"
-                        queue.append((new_state, moves + [move_description]))
-
-    return None  
-
 def generate_possible_moves(board, piece):
     possible_moves = []
     n, m = board.n, board.m
@@ -372,6 +345,34 @@ def move_piece(state, piece, new_position):
             break
     
     return {'board': board_copy, 'magnets': magnets_copy}
+
+
+def bfs_solver(initial_state):
+    queue = deque([(initial_state, [])])  
+    visited = set()  
+
+    visited.add(state_key(initial_state))
+
+    while queue:
+        current_state, moves = queue.popleft()
+
+        if current_state.is_final_state():
+            return moves
+
+        for piece in current_state.board.pieces.values():
+            if piece.piece_type in ['Red', 'Purple']:
+                for new_position in generate_possible_moves(current_state.board, piece):
+                    old_position = piece.position
+
+                    new_state = current_state.make_move(piece, new_position)
+
+                    new_state_key = state_key(new_state)
+                    if new_state_key not in visited:
+                        visited.add(new_state_key)
+                        move_description = f"{piece.piece_type}({old_position[0]}, {old_position[1]}) to ({new_position[0]}, {new_position[1]})"
+                        queue.append((new_state, moves + [move_description]))
+
+    return None  
 
 
 def dfs_solver(initial_state):
