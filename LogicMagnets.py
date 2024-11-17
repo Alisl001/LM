@@ -1,5 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox 
+from collections import deque
+import heapq
 
 class Piece:
     def __init__(self, piece_type, position):
@@ -29,6 +31,16 @@ class GameState:
         new_state = GameState(new_board)
         self.history.append(new_board)  
         return new_state
+
+    def __lt__(self, other):
+        # Compare based on the number of moves (history length) or any other heuristic
+        return len(self.history) < len(other.history)
+
+def state_key(state):
+    # Flatten the grid into a tuple along with the positions and types of pieces
+    grid_key = tuple(tuple(row) for row in state.board.grid)
+    pieces_key = tuple((piece.position, piece.piece_type) for piece in state.board.pieces.values())
+    return (grid_key, pieces_key)
 
 class Board:
     def __init__(self, n, m, pieces, targets):
@@ -187,6 +199,17 @@ class GameGUI:
         self.solve_dfs_button = tk.Button(control_frame, text="Solve using DFS", command=self.solve_using_dfs, bd=5, font=("Calibri", 12, "bold"))
         self.solve_dfs_button.pack(pady=5)
 
+        # Solve using UCS Button
+        self.solve_ucs_button = tk.Button(control_frame, text="Solve using UCS", command=self.solve_using_ucs, bd=5, font=("Calibri", 12, "bold"))
+        self.solve_ucs_button.pack(pady=5)
+
+    def solve_using_ucs(self):
+        solution_moves = ucs_solver(self.game_state)
+        if solution_moves:
+            messagebox.showinfo("Solution Found", "\n".join(solution_moves))
+        else:
+            messagebox.showinfo("No Solution", "No solution found using UCS.")
+        self.reset_board()
 
     def solve_using_dfs(self):
         solution_moves = dfs_solver(self.game_state)
@@ -292,14 +315,10 @@ class GameGUI:
         self.move_log_text.delete('1.0', tk.END)
         self.move_log_text.config(state='disabled')
 
-from collections import deque
 
 def bfs_solver(initial_state):
     queue = deque([(initial_state, [])])  
     visited = set()  
-
-    def state_key(state):
-        return tuple((piece.position, piece.piece_type) for piece in state.board.pieces.values())
 
     visited.add(state_key(initial_state))
 
@@ -326,21 +345,15 @@ def bfs_solver(initial_state):
 
 def generate_possible_moves(board, piece):
     possible_moves = []
-    n, m = board.n, board.m  
+    n, m = board.n, board.m
     row, col = piece.position
 
-    if piece.piece_type == 'Red':
-        for r in range(n):
-            for c in range(m):
-                if board.can_move_to(r, c):
-                    possible_moves.append((r, c))
-
-    elif piece.piece_type == 'Purple':
-        for r in range(n):
-            for c in range(m):
-                if board.can_move_to(r, c):
-                    possible_moves.append((r, c))
-
+    # Check the four possible directions
+    directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+    for dr, dc in directions:
+        new_row, new_col = row + dr, col + dc
+        if board.can_move_to(new_row, new_col):
+            possible_moves.append((new_row, new_col))
     return possible_moves
 
 def move_piece(state, piece, new_position):
@@ -365,9 +378,6 @@ def dfs_solver(initial_state):
     stack = [(initial_state, [])] 
     visited = set() 
 
-    def state_key(state):
-        return tuple((piece.position, piece.piece_type) for piece in state.board.pieces.values())
-
     visited.add(state_key(initial_state))
 
     while stack:
@@ -391,14 +401,47 @@ def dfs_solver(initial_state):
 
     return None 
 
+def ucs_solver(initial_state):
+    # Priority queue, storing (cost, current_state, moves)
+    priority_queue = [(0, initial_state, [])]
+    visited = set()
+
+    visited.add(state_key(initial_state))
+
+    while priority_queue:
+        # Get the least-costly state from the priority queue
+        current_cost, current_state, moves = heapq.heappop(priority_queue)
+
+        # Check if we've reached a final state
+        if current_state.is_final_state():
+            return moves
+
+        # Explore all possible moves for each magnet piece
+        for piece in current_state.board.pieces.values():
+            if piece.piece_type in ['Red', 'Purple']:
+                for new_position in generate_possible_moves(current_state.board, piece):
+                    old_position = piece.position
+
+                    # Generate a new state with the move
+                    new_state = current_state.make_move(piece, new_position)
+                    new_state_key = state_key(new_state)
+
+                    if new_state_key not in visited:
+                        visited.add(new_state_key)
+                        move_description = f"{piece.piece_type}({old_position[0]}, {old_position[1]}) to ({new_position[0]}, {new_position[1]})"
+                        new_cost = current_cost + 1  # All moves have the same cost of 1 in this setup
+                        heapq.heappush(priority_queue, (new_cost, new_state, moves + [move_description]))
+
+    return None  
+
 root = tk.Tk()
 initial_pieces = [
-    Piece('Gray', (0, 1)), 
-    Piece('Gray', (0, 3)),
+    Piece('Gray', (1, 1)), 
+    Piece('Gray', (1, 3)),
     Piece('Purple', (0, 4))
 ]
-targets = [(0, 0), (0, 2), (0, 4)]
-board = Board(1, 5, initial_pieces, targets)
+targets = [(1, 0), (1, 2), (1, 4)]
+board = Board(3, 5, initial_pieces, targets)
 game_state = GameState(board)
 game_gui = GameGUI(root, game_state)
 root.mainloop()
