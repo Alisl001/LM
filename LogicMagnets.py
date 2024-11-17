@@ -292,33 +292,6 @@ class GameGUI:
         self.move_log_text.delete('1.0', tk.END)
         self.move_log_text.config(state='disabled')
 
-# root = tk.Tk() 
-# initial_pieces = [
-#     Piece('Gray', (0, 1)), 
-#     Piece('Gray', (1, 1)), 
-#     Piece('Gray', (1, 2)), 
-#     Piece('Red', (2, 3)), 
-#     Piece('Purple', (2, 0))
-#     ] 
-# targets = [(0, 2), (1, 0), (1, 1), (2, 0), (2, 1)] 
-# board = Board(3, 4, initial_pieces, targets) 
-# game_state = GameState(board) 
-# game_gui = GameGUI(root, game_state) 
-# root.mainloop()
-
-
-# root = tk.Tk()
-# initial_pieces = [
-#     Piece('Gray', (0, 1)), 
-#     Piece('Gray', (0, 3)),
-#     Piece('Purple', (0, 4))
-# ]
-# targets = [(0, 0), (0, 2), (0, 4)]
-# board = Board(1, 5, initial_pieces, targets)
-# game_state = GameState(board) 
-# game_gui = GameGUI(root, game_state) 
-# root.mainloop()
-
 from collections import deque
 
 def bfs_solver(initial_state):
@@ -417,25 +390,6 @@ def dfs_solver(initial_state):
                         stack.append((new_state, moves + [move_description]))
 
     return None 
-
-# initial_pieces = [
-#     Piece('Gray', (0, 1)), 
-#     Piece('Gray', (0, 3)),
-#     Piece('Purple', (0, 4))
-# ]
-# targets = [(0, 0), (0, 2), (0, 4)]
-# board = Board(1, 5, initial_pieces, targets)
-# game_state = GameState(board)
-
-# # Solve the game using BFS
-# solution_moves = bfs_solver(game_state)
-
-# if solution_moves:
-#     print("Solution found:")
-#     for move in solution_moves:
-#         print(move)
-# else:
-#     print("No solution found")
 
 root = tk.Tk()
 initial_pieces = [
