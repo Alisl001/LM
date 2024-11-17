@@ -428,47 +428,39 @@ def dfs_solver(initial_state):
 
 
 def ucs_solver(initial_state):
-    # Priority queue, storing (cost, current_state, moves)
     priority_queue = [(0, initial_state, [])]
     visited = set()
 
     visited.add(state_key(initial_state))
 
     while priority_queue:
-        # Get the least-costly state from the priority queue
         current_cost, current_state, moves = heapq.heappop(priority_queue)
 
-        # Debug: Print the current state as a grid
         print("Current Game State:")
-        current_state.board.display()  # Display the board grid in the terminal
-        print("Move History:", moves)  # Print the move history
+        current_state.board.display()  
+        print("Move History:", moves)  
 
-        # Check if we've reached a final state
         if current_state.is_final_state():
-            return moves
+            return moves, current_cost
 
-        # Explore all possible moves for each magnet piece
         for piece in current_state.board.pieces.values():
             if piece.piece_type in ['Red', 'Purple']:
                 for new_position in generate_possible_moves(current_state.board, piece):
                     old_position = piece.position
 
-                    # Debug: Print the move being attempted
                     print(f"Attempting to move {piece.piece_type} from {old_position} to {new_position}")
 
-                    # Generate a new state with the move
                     new_state = current_state.make_move(piece, new_position)
 
-                    # Debug: Print the resulting state after the move
                     print("Resulting State:")
-                    new_state.board.display()  # Display the new board after the move
+                    new_state.board.display()  
                     
                     new_state_key = state_key(new_state)
 
                     if new_state_key not in visited:
                         visited.add(new_state_key)
                         move_description = f"{piece.piece_type}({old_position[0]}, {old_position[1]}) to ({new_position[0]}, {new_position[1]})"
-                        new_cost = current_cost + 1  # All moves have the same cost of 1 in this setup
+                        new_cost = current_cost + 1 
                         heapq.heappush(priority_queue, (new_cost, new_state, moves + [move_description]))
 
     print("No solution found")
