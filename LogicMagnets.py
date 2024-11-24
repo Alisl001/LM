@@ -1,3 +1,4 @@
+# LogicMagnets.py
 import tkinter as tk
 from tkinter import messagebox 
 from collections import deque
@@ -202,6 +203,22 @@ class GameGUI:
         # Solve using UCS Button
         self.solve_ucs_button = tk.Button(control_frame, text="Solve using UCS", command=self.solve_using_ucs, bd=5, font=("Calibri", 12, "bold"))
         self.solve_ucs_button.pack(pady=5)
+
+        # Solve using Hill Climbing
+        self.solve_hc_button = tk.Button(control_frame, text="Solve using Hill Climbing", command=self.solve_using_hill_climbing, bd=5, font=("Calibri", 12, "bold"))
+        self.solve_hc_button.pack(pady=5)
+
+
+    def solve_using_hill_climbing(self):
+        solution_state, solution_moves = hill_climbing_solver(self.game_state)
+        if solution_state and solution_state.is_final_state():
+            messagebox.showinfo("Solution Found", "\n".join(solution_moves))
+            self.game_state = solution_state
+            self.draw_board()
+        else:
+            messagebox.showinfo("No Solution", "No solution found using Hill Climbing.")
+        self.reset_board()
+
 
     def solve_using_ucs(self):
         solution_moves = ucs_solver(self.game_state)
@@ -465,6 +482,45 @@ def ucs_solver(initial_state):
 
     print("No solution found")
     return None
+
+
+def hill_climbing_solver(initial_state):
+    def heuristic(board):
+        # Calculate Manhattan distance of all pieces to their nearest target
+        total_distance = 0
+        for piece in board.pieces.values():
+            if piece.piece_type in ['Red', 'Purple', 'Gray']:
+                distances = [abs(piece.position[0] - t[0]) + abs(piece.position[1] - t[1]) for t in board.targets]
+                total_distance += min(distances) if distances else 0
+        return total_distance
+
+    current_state = initial_state
+    visited_states = set()
+    solution_moves = []
+
+    while not current_state.is_final_state():
+        visited_states.add(state_key(current_state))
+
+        moves = []
+        for piece in current_state.board.pieces.values():
+            possible_moves = generate_possible_moves(current_state.board, piece)
+            for new_position in possible_moves:
+                new_state = current_state.make_move(piece, new_position)
+                if state_key(new_state) not in visited_states:
+                    heuristic_score = heuristic(new_state.board)
+                    moves.append((heuristic_score, piece, new_position, new_state))
+
+        if not moves:
+            return None, solution_moves
+
+        moves.sort(key=lambda x: x[0])
+        best_move = moves[0]
+        _, piece, new_position, new_state = best_move
+
+        solution_moves.append(f"{piece.piece_type[0]}({piece.position[0]}, {piece.position[1]}) to ({new_position[0]}, {new_position[1]})")
+        current_state = new_state
+
+    return current_state, solution_moves
 
 
 root = tk.Tk()
