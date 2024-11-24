@@ -484,15 +484,17 @@ def ucs_solver(initial_state):
     return None
 
 
+def heuristic(board):
+    # Calculate Manhattan distance of all pieces to their nearest target
+    total_distance = 0
+    for piece in board.pieces.values():
+        if piece.piece_type in ['Red', 'Purple', 'Gray']:
+            distances = [abs(piece.position[0] - t[0]) + abs(piece.position[1] - t[1]) for t in board.targets]
+            total_distance += min(distances) if distances else 0
+    return total_distance
+
+
 def hill_climbing_solver(initial_state):
-    def heuristic(board):
-        # Calculate Manhattan distance of all pieces to their nearest target
-        total_distance = 0
-        for piece in board.pieces.values():
-            if piece.piece_type in ['Red', 'Purple', 'Gray']:
-                distances = [abs(piece.position[0] - t[0]) + abs(piece.position[1] - t[1]) for t in board.targets]
-                total_distance += min(distances) if distances else 0
-        return total_distance
 
     current_state = initial_state
     visited_states = set()
