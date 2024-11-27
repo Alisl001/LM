@@ -333,17 +333,28 @@ class GameGUI:
         self.move_log_text.config(state='disabled')
 
 
-def generate_possible_moves(board, piece):
-    possible_moves = []
-    n, m = board.n, board.m
-    row, col = piece.position
+# def generate_possible_moves(board, piece):
+#     possible_moves = []
+#     n, m = board.n, board.m
+#     row, col = piece.position
 
-    # Check the four possible directions
-    directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
-    for dr, dc in directions:
-        new_row, new_col = row + dr, col + dc
-        if board.can_move_to(new_row, new_col):
-            possible_moves.append((new_row, new_col))
+#     # Check the four possible directions
+#     directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+#     for dr, dc in directions:
+#         new_row, new_col = row + dr, col + dc
+#         if board.can_move_to(new_row, new_col):
+#             possible_moves.append((new_row, new_col))
+#     return possible_moves
+
+def generate_possible_moves(board, piece):
+
+    possible_moves = []
+    
+    for row in range(board.n):
+        for col in range(board.m):
+            if board.can_move_to(row, col):
+                possible_moves.append((row, col))
+    
     return possible_moves
 
 def move_piece(state, piece, new_position):
