@@ -208,6 +208,18 @@ class GameGUI:
         self.solve_hc_button = tk.Button(control_frame, text="Solve using Hill Climbing", command=self.solve_using_hill_climbing, bd=5, font=("Calibri", 12, "bold"))
         self.solve_hc_button.pack(pady=5)
 
+        # Solve using A* Button
+        self.solve_astar_button = tk.Button(control_frame, text="Solve using A*", command=self.solve_using_astar, bd=5, font=("Calibri", 12, "bold"))
+        self.solve_astar_button.pack(pady=5)
+
+    def solve_using_astar(self):
+        solution_moves = a_star_solver(self.game_state)
+        if solution_moves:
+            messagebox.showinfo("Solution Found", "\n".join(solution_moves))
+        else:
+            messagebox.showinfo("No Solution", "No solution found using A*.")
+        self.reset_board()
+
 
     def solve_using_hill_climbing(self):
         solution_state, solution_moves = hill_climbing_solver(self.game_state)
@@ -494,14 +506,17 @@ def ucs_solver(initial_state):
     print("No solution found")
     return None
 
-
-def heuristic(board):
-    # Calculate Manhattan distance of all pieces to their nearest target
+def heuristic(state, targets):
+    """
+    Calculate the Manhattan distance heuristic for all pieces to their closest targets.
+    """
     total_distance = 0
-    for piece in board.pieces.values():
+    for piece in state.board.pieces.values():
         if piece.piece_type in ['Red', 'Purple', 'Gray']:
-            distances = [abs(piece.position[0] - t[0]) + abs(piece.position[1] - t[1]) for t in board.targets]
-            total_distance += min(distances) if distances else 0
+            piece_position = piece.position
+            distances = [abs(piece_position[0] - target[0]) + abs(piece_position[1] - target[1]) for target in targets]
+            if distances: 
+                total_distance += min(distances)
     return total_distance
 
 
@@ -520,20 +535,62 @@ def hill_climbing_solver(initial_state):
             for new_position in possible_moves:
                 new_state = current_state.make_move(piece, new_position)
                 if state_key(new_state) not in visited_states:
-                    heuristic_score = heuristic(new_state.board)
+                    heuristic_score = heuristic(new_state, current_state.board.targets)
                     moves.append((heuristic_score, piece, new_position, new_state))
 
         if not moves:
             return None, solution_moves
 
+        # Select the best move (lowest heuristic score)
         moves.sort(key=lambda x: x[0])
-        best_move = moves[0]
-        _, piece, new_position, new_state = best_move
+        _, piece, new_position, new_state = moves[0]
 
         solution_moves.append(f"{piece.piece_type[0]}({piece.position[0]}, {piece.position[1]}) to ({new_position[0]}, {new_position[1]})")
         current_state = new_state
 
     return current_state, solution_moves
+
+
+def a_star_solver(initial_state):
+
+    open_set = []
+    heapq.heappush(open_set, (0, initial_state))  # (f_score, state)
+    closed_set = set()
+    came_from = {}
+    cost_so_far = {state_key(initial_state): 0}
+
+    while open_set:
+        _, current_state = heapq.heappop(open_set)
+
+        if current_state.is_final_state():
+            # Reconstruct the path
+            path = []
+            while current_state in came_from:
+                path.append(came_from[current_state][1])  # Append the move
+                current_state = came_from[current_state][0]
+            return list(reversed(path))  # Return moves in order
+
+        current_key = state_key(current_state)
+        closed_set.add(current_key)
+
+        for piece in current_state.board.pieces.values():
+            possible_moves = generate_possible_moves(current_state.board, piece)
+            for move in possible_moves:
+                new_state = current_state.make_move(piece, move)
+                new_key = state_key(new_state)
+
+                if new_key in closed_set:
+                    continue
+
+                # Calculate g_score and f_score
+                new_cost = cost_so_far[current_key] + 1  # Each move costs 1
+                if new_key not in cost_so_far or new_cost < cost_so_far[new_key]:
+                    cost_so_far[new_key] = new_cost
+                    priority = new_cost + heuristic(new_state, board.targets)
+                    heapq.heappush(open_set, (priority, new_state))
+                    came_from[new_state] = (current_state, f"{piece.piece_type[0]}({piece.position[0]}, {piece.position[1]}) to ({move[0]}, {move[1]})")
+
+    return None  
 
 
 root = tk.Tk()
