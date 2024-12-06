@@ -595,11 +595,12 @@ def a_star_solver(initial_state):
 
 root = tk.Tk()
 initial_pieces = [
-    Piece('Gray', (1, 1)), 
-    Piece('Gray', (1, 3)),
-    Piece('Purple', (0, 2))
+    Piece('Gray', (0, 1)), 
+    Piece('Gray', (0, 3)),
+    Piece('Purple', (1, 2)),
+    Piece('Red', (2, 2))
 ]
-targets = [(1, 0), (1, 2), (1, 4)]
+targets = [(0, 0), (0, 2), (1, 4), (2, 4)]
 board = Board(3, 5, initial_pieces, targets)
 game_state = GameState(board)
 game_gui = GameGUI(root, game_state)
